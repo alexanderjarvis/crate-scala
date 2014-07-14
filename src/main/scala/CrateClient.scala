@@ -7,16 +7,14 @@ import io.crate.action.sql.SQLResponse;
 
 class CrateClient(javaCrateClient: io.crate.client.CrateClient) {
 
-  def sql(statement: String)(implicit ec: ExecutionContext): Future[SQLResponse] = {
-    val promise = Promise[SQLResponse]()
-    javaCrateClient.sql(statement, actionListener(promise))
-    promise.future
+  def sql(statement: String)(implicit ec: ExecutionContext): Future[CrateResponse] = {
+    sql(SQLRequest(statement))
   }
 
-  def sql(request: SQLRequest)(implicit ec: ExecutionContext): Future[SQLResponse] = {
+  def sql(request: SQLRequest)(implicit ec: ExecutionContext): Future[CrateResponse] = {
     val promise = Promise[SQLResponse]()
     javaCrateClient.sql(request, actionListener(promise))
-    promise.future
+    promise.future.map(CrateResponse(_))
   }
 
   private def actionListener[A](promise: Promise[A]) = new ActionListener[A] {

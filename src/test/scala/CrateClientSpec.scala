@@ -8,11 +8,12 @@ import org.elasticsearch.transport.RemoteTransportException
 
 import io.crate.action.sql.SQLActionException
 import io.crate.action.sql.SQLResponse
-import io.crate.action.sql.SQLRequest
 
 class CrateClientSpec extends FlatSpec with Matchers {
 
   val timeout = 5 seconds
+
+  val timestamp = new java.util.Date().getTime()
 
   val client = CrateClient("localhost:4300")
 
@@ -71,7 +72,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
       Array("crate", "is", "pretty", "cool"),
       Map("nested" -> true, "maps" -> "yes"),
       "127.0.0.1",
-      new java.util.Date().getTime(),
+      timestamp,
       Array(-0.1015987, 51.5286416)
     )
 
@@ -98,7 +99,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
       Array(Byte.MaxValue),
       Array(true),
       Array("127.0.0.1"),
-      Array(new java.util.Date().getTime())
+      Array(timestamp)
     )
 
     val sqlRequest = SQLRequest(stmt, args)
@@ -107,5 +108,48 @@ class CrateClientSpec extends FlatSpec with Matchers {
     println("insert into: " + response)
     response.rowCount shouldBe (1)
   }
+
+  it should "map Java to Scala data types on select" in {
+    refresh("test")
+    val request = client.sql("SELECT * FROM test")
+    val response = Await.result(request, timeout)
+    println("select: " + response)
+    response.rowCount shouldBe (1)
+
+    val rows = response.rows
+    val row = rows(0)
+    row shouldBe a [Array[Any]]
+
+    // result columns are alphabetically sorted
+    row(0) shouldBe a [String]
+    row(0) shouldBe "127.0.0.1"
+    row(1) shouldBe a [List[_]]
+    row(1).asInstanceOf[List[String]] should contain inOrderOnly ("crate", "is", "pretty", "cool")
+    //row(2) shouldBe a [Byte] // CRATE: 127 was not an instance of byte, but an instance of java.lang.Integer
+    row(2) shouldBe Byte.MaxValue
+    //row(3) shouldBe a [Boolean]
+    row(3) shouldBe true
+    //row(4) shouldBe a [Double]
+    row(4) shouldBe Double.MaxValue
+    //row(5) shouldBe a [Float] // CRATE: 3.4028235E38 was not an instance of float, but an instance of java.lang.Double
+    //row(5) shouldBe Float.MaxValue // CRATE: 3.4028235E38 was not equal to 3.4028235E38
+    row(6) shouldBe a [List[_]]
+    row(6).asInstanceOf[List[Double]] should contain inOrderOnly (-0.1015987, 51.5286416)
+    //row(7) shouldBe a [Int]
+    row(7) shouldBe Int.MaxValue
+    //row(8) shouldBe a [Long]
+    row(8) shouldBe Long.MaxValue
+    row(9).asInstanceOf[Map[_, _]] should contain only ("nested" -> true, "maps" -> "yes")
+    //row(10) shouldBe a [Short] // CRATE: 32767 was not an instance of short, but an instance of java.lang.Integer
+    row(10) shouldBe Short.MaxValue
+    row(11) shouldBe a [String]
+    row(11) shouldBe "hello"
+    //row(12) shouldBe a [Long]
+    row(12) shouldBe timestamp
+  }
+
+  // sqlRequest.includeTypesOnResponse(true)
+
+  def refresh(table: String) = Await.ready(client.sql("refresh table " + table), timeout)
 
 }
