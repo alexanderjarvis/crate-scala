@@ -189,7 +189,50 @@ class CrateClientSpec extends FlatSpec with Matchers {
   }
 
   it should "map Java to Scala data types for arrays" in {
-    // todo
+    refresh("testarrays")
+    val request = client.sql("SELECT * FROM testarrays")
+    val response = Await.result(request, timeout)
+    println("select: " + response)
+    response.rowCount shouldBe (1)
+
+    val row = response.rows(0)
+
+    // result columns are alphabetically sorted
+    row(0).asInstanceOf[List[Boolean]] should contain only true
+    row(1).asInstanceOf[List[Byte]] should contain only Byte.MaxValue
+    row(2).asInstanceOf[List[Double]] should contain only Double.MaxValue
+    //row(3).asInstanceOf[List[Float]] should contain only Float.MaxValue // CRATE: List(3.4028235E38) did not contain only (3.4028235E38)
+    row(4).asInstanceOf[List[Int]] should contain only Int.MaxValue
+    row(5).asInstanceOf[List[String]] should contain only "127.0.0.1"
+    row(6).asInstanceOf[List[Long]] should contain only Long.MaxValue
+    //row(7)
+    row(8).asInstanceOf[List[Short]] should contain only Short.MaxValue
+    row(9).asInstanceOf[List[String]] should contain only "hello"
+    row(10).asInstanceOf[List[Long]] should contain only timestamp
+  }
+
+  it should "map more array data types with types on response set" in {
+    val sqlRequest = SQLRequest("SELECT * FROM testarrays")
+    sqlRequest.includeTypesOnResponse(true)
+    val request = client.sql(sqlRequest)
+    val response = Await.result(request, timeout)
+    println("select: " + response)
+    response.rowCount shouldBe (1)
+
+    val row = response.rows(0)
+
+    // result columns are alphabetically sorted
+    row(0).asInstanceOf[List[Boolean]] should contain only true
+    row(1).asInstanceOf[List[Byte]] should contain only Byte.MaxValue
+    row(2).asInstanceOf[List[Double]] should contain only Double.MaxValue
+    row(3).asInstanceOf[List[Float]] should contain only Float.MaxValue
+    row(4).asInstanceOf[List[Int]] should contain only Int.MaxValue
+    row(5).asInstanceOf[List[String]] should contain only "127.0.0.1"
+    row(6).asInstanceOf[List[Long]] should contain only Long.MaxValue
+    //row(7)
+    row(8).asInstanceOf[List[Short]] should contain only Short.MaxValue
+    row(9).asInstanceOf[List[String]] should contain only "hello"
+    row(10).asInstanceOf[List[Long]] should contain only timestamp
   }
 
   def refresh(table: String) = Await.ready(client.sql("refresh table " + table), timeout)

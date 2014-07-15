@@ -49,6 +49,7 @@ object CrateResponse {
         case l: java.util.List[_] => l.asScala.toList.map(_.asInstanceOf[AnyVal])
         case m: java.util.Map[_, _] => m.asScala.toMap.mapValues(_.asInstanceOf[AnyVal])
         case o: AnyRef => o.asInstanceOf[AnyVal]
+        case _ => // null
       }
     } else {
       Array.tabulate(row.length) { i =>
@@ -83,6 +84,7 @@ object CrateResponse {
       //case _: IpType => o.asInstanceOf[String]  // unreachable as IpType extends StringType
       //case _: TimestampType => o.asInstanceOf[Long] // unreachable as TimestampType extends LongType
       case _: GeoPointType => o.asInstanceOf[java.util.List[Double]].asScala.toList.map(_.asInstanceOf[AnyVal])
+      case _ => // null
     }
   }
 
