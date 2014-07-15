@@ -9,13 +9,16 @@ import org.elasticsearch.transport.RemoteTransportException
 import io.crate.action.sql.SQLActionException
 import io.crate.action.sql.SQLResponse
 
+import io.crate.client.ReactiveCrateClient
+import io.crate.client.SQLRequest
+
 class CrateClientSpec extends FlatSpec with Matchers {
 
   val timeout = 5 seconds
 
   val timestamp = new java.util.Date().getTime()
 
-  val client = CrateClient("localhost:4300")
+  val client = ReactiveCrateClient("localhost:4300")
 
   "Crate Client" should "create new client" in {
     val request = client.sql("SELECT * FROM sys.nodes")

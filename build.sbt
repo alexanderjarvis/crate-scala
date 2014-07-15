@@ -1,6 +1,6 @@
 name := "crate-scala"
 
-organization := "uk.co.panaxiom"
+organization := "io.crate"
 
 version := "1.0"
 

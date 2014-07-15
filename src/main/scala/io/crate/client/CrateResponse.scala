@@ -1,3 +1,5 @@
+package io.crate.client
+
 import scala.collection.JavaConverters._
 
 import io.crate.action.sql.SQLResponse

@@ -1,18 +1,17 @@
+package io.crate.client
+
 import scala.concurrent._
 
 import org.elasticsearch.action.ActionListener
 
-import io.crate.action.sql.SQLRequest;
-import io.crate.action.sql.SQLResponse;
-
-class CrateClient(javaCrateClient: io.crate.client.CrateClient) {
+class ReactiveCrateClient(javaCrateClient: CrateClient) {
 
   def sql(statement: String)(implicit ec: ExecutionContext): Future[CrateResponse] = {
     sql(SQLRequest(statement))
   }
 
-  def sql(request: SQLRequest)(implicit ec: ExecutionContext): Future[CrateResponse] = {
-    val promise = Promise[SQLResponse]()
+  def sql(request: io.crate.action.sql.SQLRequest)(implicit ec: ExecutionContext): Future[CrateResponse] = {
+    val promise = Promise[io.crate.action.sql.SQLResponse]()
     javaCrateClient.sql(request, actionListener(promise))
     promise.future.map(CrateResponse(_))
   }
@@ -26,13 +25,17 @@ class CrateClient(javaCrateClient: io.crate.client.CrateClient) {
     }
   }
 
+  def close(): Unit = {
+    javaCrateClient.close()
+  }
+
 }
 
-object CrateClient {
+object ReactiveCrateClient {
 
-  def apply(servers: String*): CrateClient = {
-    val javaCrateClient = new io.crate.client.CrateClient(servers: _*)
-    new CrateClient(javaCrateClient)
+  def apply(servers: String*): ReactiveCrateClient = {
+    val javaCrateClient = new CrateClient(servers: _*)
+    new ReactiveCrateClient(javaCrateClient)
   }
 
 }
