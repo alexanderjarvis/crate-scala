@@ -83,32 +83,6 @@ class CrateClientSpec extends FlatSpec with Matchers {
     response.rowCount shouldBe (1)
   }
 
-  it should "map Scala to Java data types for arrays" in {
-    val dropResult = Await.result(client.sql("DROP TABLE testarrays"), timeout)
-    val result = Await.result(client.sql("CREATE TABLE testarrays (a_string array(string), a_short array(short), a_integer array(integer), a_long array(long), a_float array(float), a_double array(double), a_byte array(byte), a_boolean array(boolean), a_object array(object), a_ip array(ip), a_timestamp array(timestamp))"), timeout)
-    println("create table: " + result)
-
-    val stmt = "INSERT INTO testarrays (a_string, a_short, a_integer, a_long, a_float, a_double, a_byte, a_boolean, a_ip, a_timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    val args = Array(
-      Array("hello"),
-      Array(Short.MaxValue),
-      Array(Int.MaxValue),
-      Array(Long.MaxValue),
-      Array(Float.MaxValue),
-      Array(Double.MaxValue),
-      Array(Byte.MaxValue),
-      Array(true),
-      Array("127.0.0.1"),
-      Array(timestamp)
-    )
-
-    val sqlRequest = SQLRequest(stmt, args)
-    val request = client.sql(sqlRequest)
-    val response = Await.result(request, timeout)
-    println("insert into: " + response)
-    response.rowCount shouldBe (1)
-  }
-
   it should "map Java to Scala data types on select" in {
     refresh("test")
     val request = client.sql("SELECT * FROM test")
@@ -148,7 +122,75 @@ class CrateClientSpec extends FlatSpec with Matchers {
     row(12) shouldBe timestamp
   }
 
-  // sqlRequest.includeTypesOnResponse(true)
+  it should "map more data types with types on response set" in {
+    val sqlRequest = SQLRequest("SELECT * FROM test")
+    sqlRequest.includeTypesOnResponse(true)
+    val request = client.sql(sqlRequest)
+    val response = Await.result(request, timeout)
+    println("select: " + response)
+    response.rowCount shouldBe (1)
+
+    val rows = response.rows
+    val row = rows(0)
+    row shouldBe a [Array[Any]]
+
+    // result columns are alphabetically sorted
+    row(0) shouldBe a [String]
+    row(0) shouldBe "127.0.0.1"
+    row(1) shouldBe a [List[_]]
+    row(1).asInstanceOf[List[String]] should contain inOrderOnly ("crate", "is", "pretty", "cool")
+    row(2) shouldBe a [java.lang.Byte]
+    row(2) shouldBe Byte.MaxValue
+    row(3) shouldBe a [java.lang.Boolean]
+    row(3) shouldBe true
+    row(4) shouldBe a [java.lang.Double]
+    row(4) shouldBe Double.MaxValue
+    row(5) shouldBe a [java.lang.Float] // CRATE: 3.4028235E38 was not an instance of float, but an instance of java.lang.Double
+    row(5) shouldBe Float.MaxValue // CRATE: 3.4028235E38 was not equal to 3.4028235E38
+    row(6) shouldBe a [List[_]]
+    row(6).asInstanceOf[List[Double]] should contain inOrderOnly (-0.1015987, 51.5286416)
+    row(7) shouldBe a [java.lang.Integer]
+    row(7) shouldBe Int.MaxValue
+    row(8) shouldBe a [java.lang.Long]
+    row(8) shouldBe Long.MaxValue
+    row(9).asInstanceOf[Map[_, _]] should contain only ("nested" -> true, "maps" -> "yes")
+    row(10) shouldBe a [java.lang.Short] // CRATE: 32767 was not an instance of short, but an instance of java.lang.Integer
+    row(10) shouldBe Short.MaxValue
+    row(11) shouldBe a [String]
+    row(11) shouldBe "hello"
+    row(12) shouldBe a [java.lang.Long]
+    row(12) shouldBe timestamp
+  }
+
+  it should "map Scala to Java data types for arrays" in {
+    val dropResult = Await.result(client.sql("DROP TABLE testarrays"), timeout)
+    val result = Await.result(client.sql("CREATE TABLE testarrays (a_string array(string), a_short array(short), a_integer array(integer), a_long array(long), a_float array(float), a_double array(double), a_byte array(byte), a_boolean array(boolean), a_object array(object), a_ip array(ip), a_timestamp array(timestamp))"), timeout)
+    println("create table: " + result)
+
+    val stmt = "INSERT INTO testarrays (a_string, a_short, a_integer, a_long, a_float, a_double, a_byte, a_boolean, a_ip, a_timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    val args = Array(
+      Array("hello"),
+      Array(Short.MaxValue),
+      Array(Int.MaxValue),
+      Array(Long.MaxValue),
+      Array(Float.MaxValue),
+      Array(Double.MaxValue),
+      Array(Byte.MaxValue),
+      Array(true),
+      Array("127.0.0.1"),
+      Array(timestamp)
+    )
+
+    val sqlRequest = SQLRequest(stmt, args)
+    val request = client.sql(sqlRequest)
+    val response = Await.result(request, timeout)
+    println("insert into: " + response)
+    response.rowCount shouldBe (1)
+  }
+
+  it should "map Java to Scala data types for arrays" in {
+    // todo
+  }
 
   def refresh(table: String) = Await.ready(client.sql("refresh table " + table), timeout)
 
