@@ -10,6 +10,21 @@ case class CrateResponse(
   rowCount: Long,
   duration: Long) {
 
+  def cell(columnName: String)(implicit row: Array[_]): Option[Any] = {
+    cellWithRow(columnName, row)
+  }
+
+  def cellWithRow(columnName: String, row: Array[_]): Option[Any] = {
+    columnIndexWithName(columnName).flatMap { i =>
+      Option(row(i))
+    }
+  }
+
+  def columnIndexWithName(name: String): Option[Int] = {
+    val index = cols.indexOf(name)
+    if (index == -1) None else Some(index)
+  }
+
   override def toString() = {
     "CrateResponse { " +
       "cols=" + cols.mkString("[", ",", "]") +

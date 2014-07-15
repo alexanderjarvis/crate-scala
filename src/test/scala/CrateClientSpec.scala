@@ -145,8 +145,8 @@ class CrateClientSpec extends FlatSpec with Matchers {
     row(3) shouldBe true
     row(4) shouldBe a [java.lang.Double]
     row(4) shouldBe Double.MaxValue
-    row(5) shouldBe a [java.lang.Float] // CRATE: 3.4028235E38 was not an instance of float, but an instance of java.lang.Double
-    row(5) shouldBe Float.MaxValue // CRATE: 3.4028235E38 was not equal to 3.4028235E38
+    row(5) shouldBe a [java.lang.Float]
+    row(5) shouldBe Float.MaxValue
     row(6) shouldBe a [List[_]]
     row(6).asInstanceOf[List[Double]] should contain inOrderOnly (-0.1015987, 51.5286416)
     row(7) shouldBe a [java.lang.Integer]
@@ -154,7 +154,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
     row(8) shouldBe a [java.lang.Long]
     row(8) shouldBe Long.MaxValue
     row(9).asInstanceOf[Map[_, _]] should contain only ("nested" -> true, "maps" -> "yes")
-    row(10) shouldBe a [java.lang.Short] // CRATE: 32767 was not an instance of short, but an instance of java.lang.Integer
+    row(10) shouldBe a [java.lang.Short]
     row(10) shouldBe Short.MaxValue
     row(11) shouldBe a [String]
     row(11) shouldBe "hello"
@@ -195,7 +195,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
     println("select: " + response)
     response.rowCount shouldBe (1)
 
-    val row = response.rows(0)
+    val row = response.rows.head
 
     // result columns are alphabetically sorted
     row(0).asInstanceOf[List[Boolean]] should contain only true
@@ -219,7 +219,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
     println("select: " + response)
     response.rowCount shouldBe (1)
 
-    val row = response.rows(0)
+    val row = response.rows.head
 
     // result columns are alphabetically sorted
     row(0).asInstanceOf[List[Boolean]] should contain only true
@@ -233,6 +233,20 @@ class CrateClientSpec extends FlatSpec with Matchers {
     row(8).asInstanceOf[List[Short]] should contain only Short.MaxValue
     row(9).asInstanceOf[List[String]] should contain only "hello"
     row(10).asInstanceOf[List[Long]] should contain only timestamp
+  }
+
+  it should "access cell via column names" in {
+    val request = client.sql("SELECT * FROM test")
+    val response = Await.result(request, timeout)
+    println("select: " + response)
+    response.rowCount shouldBe (1)
+
+    implicit val row = response.rows.head
+
+    response.cell("st") shouldBe Some("hello")
+    response.cell("i") shouldBe Some(Int.MaxValue)
+    response.cell("ts") shouldBe Some(timestamp)
+    response.cell("none") shouldBe None
   }
 
   def refresh(table: String) = Await.ready(client.sql("refresh table " + table), timeout)
