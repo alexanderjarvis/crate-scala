@@ -12,3 +12,5 @@ libraryDependencies ++= Seq(
 )
 
 resolvers += "Crate bintray" at "http://dl.bintray.com/crate/crate"
+
+testOptions in Test += Tests.Argument("-oDF")
