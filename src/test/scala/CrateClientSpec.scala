@@ -250,6 +250,8 @@ class CrateClientSpec extends FlatSpec with Matchers {
     response.cell("i") shouldBe Some(Int.MaxValue)
     response.cell("ts") shouldBe Some(timestamp)
     response.cell("none") shouldBe None
+
+    response.cell[String]("st") shouldBe Some("hello")
   }
 
   def refresh(table: String) = Await.ready(client.sql("refresh table " + table), timeout)

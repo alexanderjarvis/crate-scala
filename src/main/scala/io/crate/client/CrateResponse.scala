@@ -12,13 +12,13 @@ case class CrateResponse(
   rowCount: Long,
   duration: Long) {
 
-  def cell(columnName: String)(implicit row: Array[_]): Option[Any] = {
+  def cell[T](columnName: String)(implicit row: Array[_]): Option[T] = {
     cellWithRow(columnName, row)
   }
 
-  def cellWithRow(columnName: String, row: Array[_]): Option[Any] = {
+  def cellWithRow[T](columnName: String, row: Array[_]): Option[T] = {
     columnIndexWithName(columnName).flatMap { i =>
-      Option(row(i))
+      Option(row(i).asInstanceOf[T])
     }
   }
 
@@ -62,16 +62,20 @@ object CrateResponse {
 
   def convertRow(row: Array[Object])(implicit columnTypes: Array[DataType[_]]): Array[_] = {
     if (columnTypes.isEmpty) {
-      row.map {
-        case l: java.util.List[_] => l.asScala.toList.map(_.asInstanceOf[AnyVal])
-        case m: java.util.Map[_, _] => m.asScala.toMap.mapValues(_.asInstanceOf[AnyVal])
-        case o: AnyRef => o.asInstanceOf[AnyVal]
-        case null => // null
-      }
+      row.map(convertToScalaColumnType)
     } else {
       Array.tabulate(row.length) { i =>
         convertToScalaColumnType(row(i), columnTypes(i))
       }
+    }
+  }
+
+  def convertToScalaColumnType(o: Any): Any = {
+    o match {
+        case l: java.util.List[_] => l.asScala.toList.map(_.asInstanceOf[AnyVal])
+        case m: java.util.Map[_, _] => m.asScala.toMap.mapValues(_.asInstanceOf[AnyVal])
+        case o: AnyRef => o.asInstanceOf[AnyVal]
+        case null => // null
     }
   }
 
