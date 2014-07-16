@@ -10,6 +10,10 @@ class ReactiveCrateClient(javaCrateClient: CrateClient) {
     sql(SQLRequest(statement))
   }
 
+  def sql(statement: String, args: Array[_])(implicit ec: ExecutionContext): Future[CrateResponse] = {
+    sql(SQLRequest(statement, args))
+  }
+
   def sql(request: io.crate.action.sql.SQLRequest)(implicit ec: ExecutionContext): Future[CrateResponse] = {
     val promise = Promise[io.crate.action.sql.SQLResponse]()
     javaCrateClient.sql(request, actionListener(promise))
