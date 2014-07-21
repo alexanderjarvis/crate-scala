@@ -1,5 +1,8 @@
 package io.crate.client
 
+import java.util.Date
+import java.util.UUID
+
 import scala.collection.JavaConverters._
 
 object SQLRequest {
@@ -23,6 +26,8 @@ object SQLRequest {
       case m: Map[_, _] => m.asJava
       case s: Some[_] => convertToJavaColumnType(s.get)
       case None => null
+      case d: Date => d.getTime().asInstanceOf[java.lang.Long]
+      case u: UUID => u.toString()
       case v: Any => v.asInstanceOf[AnyRef]
     }
   }
