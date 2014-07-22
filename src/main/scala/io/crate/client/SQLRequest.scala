@@ -24,6 +24,7 @@ object SQLRequest {
       case x: Array[Byte] => x.map(_.asInstanceOf[java.lang.Byte])
       case x: Array[Boolean] => x.map(_.asInstanceOf[java.lang.Boolean])
       case m: Map[_, _] => m.asJava
+      case t: Seq[_] => t.asJava
       case s: Some[_] => convertToJavaColumnType(s.get)
       case None => null
       case d: Date => d.getTime().asInstanceOf[java.lang.Long]
