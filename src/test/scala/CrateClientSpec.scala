@@ -20,6 +20,11 @@ class CrateClientSpec extends FlatSpec with Matchers {
 
   val client = ReactiveCrateClient("localhost:4300")
 
+  def dropTable(table: String) = Await.ready(client.sql("DROP TABLE " + table), timeout)
+
+  dropTable("test")
+  dropTable("testarrays")
+
   "Crate Client" should "create new client" in {
     val request = client.sql("SELECT * FROM sys.nodes")
     val response = Await.result(request, timeout)
@@ -58,7 +63,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
   }
 
   it should "map Scala to Java data types on insertion" in {
-    val dropResult = Await.result(client.sql("DROP TABLE test"), timeout)
+
     val result = Await.result(client.sql("CREATE TABLE test (st string, sh short, i integer, lo long, fl float, do double, b byte, bo boolean, arr array(string), o object, a ip, ts timestamp, ge geo_point)"), timeout)
     println("create table: " + result)
 
@@ -166,7 +171,6 @@ class CrateClientSpec extends FlatSpec with Matchers {
   }
 
   it should "map Scala to Java data types for arrays" in {
-    val dropResult = Await.result(client.sql("DROP TABLE testarrays"), timeout)
     val result = Await.result(client.sql("CREATE TABLE testarrays (a_string array(string), a_short array(short), a_integer array(integer), a_long array(long), a_float array(float), a_double array(double), a_byte array(byte), a_boolean array(boolean), a_object array(object), a_ip array(ip), a_timestamp array(timestamp))"), timeout)
     println("create table: " + result)
 

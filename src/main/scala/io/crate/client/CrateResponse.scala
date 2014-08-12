@@ -102,6 +102,7 @@ object CrateResponse {
         case o: java.util.List[_] => o.asInstanceOf[java.util.List[_]].asScala.toList.map { io =>
           convertToScalaColumnType(io, arrayType.innerType())
         }
+        case null => null
       }
       case _: ObjectType => o.asInstanceOf[java.util.Map[_, _]].asScala.toMap.mapValues(_.asInstanceOf[AnyVal])
       //case _: IpType => o.asInstanceOf[String]  // unreachable as IpType extends StringType
