@@ -258,6 +258,17 @@ class CrateClientSpec extends FlatSpec with Matchers {
     response.cell[String]("st") shouldBe Some("hello")
   }
 
+  it should "bulk insert data" in {
+    val stmt = "INSERT INTO foo (id, name) VALUES (?, ?)"
+    val bulkArgs = Array(Array(1000, "bar"), Array(1001, "bar"))
+    val request = client.bulkSql(stmt, bulkArgs)
+    val response = Await.result(request, timeout)
+    println("insert into: " + response)
+    response.results.length shouldBe (2)
+    val results = response.results
+    results(1).rowCount shouldBe (1)
+  }
+
   def refresh(table: String) = Await.ready(client.sql("refresh table " + table), timeout)
 
 }

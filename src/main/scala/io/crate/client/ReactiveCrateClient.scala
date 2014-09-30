@@ -20,6 +20,16 @@ class ReactiveCrateClient(javaCrateClient: CrateClient) {
     promise.future.map(CrateResponse(_))
   }
 
+  def bulkSql(statement: String, bulkArgs: Array[Array[Any]])(implicit ec: ExecutionContext): Future[io.crate.action.sql.SQLBulkResponse] = {
+    bulkSql(SQLBulkRequest(statement, bulkArgs))
+  }
+
+  def bulkSql(bulkRequest: io.crate.action.sql.SQLBulkRequest)(implicit ec: ExecutionContext): Future[io.crate.action.sql.SQLBulkResponse] = {
+    val promise = Promise[io.crate.action.sql.SQLBulkResponse]()
+    javaCrateClient.bulkSql(bulkRequest, actionListener(promise))
+    promise.future
+  }
+
   private def actionListener[A](promise: Promise[A]) = new ActionListener[A] {
     def onResponse(response: A) {
       promise.success(response)
