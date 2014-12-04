@@ -108,7 +108,7 @@ object CrateResponse {
       //case _: IpType => o.asInstanceOf[String]  // unreachable as IpType extends StringType
       //case _: TimestampType => o.asInstanceOf[Long] // unreachable as TimestampType extends LongType
       case _: GeoPointType => o.asInstanceOf[java.util.List[Double]].asScala.toList.map(_.asInstanceOf[AnyVal])
-      case _: NullType => null
+      case _: UndefinedType => null
     }
   }
 
