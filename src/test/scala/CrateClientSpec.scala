@@ -267,6 +267,14 @@ class CrateClientSpec extends FlatSpec with Matchers {
     response.results.length shouldBe (2)
     val results = response.results
     results(1).rowCount shouldBe (1)
+
+    // duplicate keys
+    val request2 = client.bulkSql(stmt, bulkArgs)
+    val response2 = Await.result(request2, timeout)
+    println("insert into: " + response2)
+    response2.results.length shouldBe (2)
+    val results2 = response2.results
+    results2(1).rowCount shouldBe (-2)
   }
 
   def refresh(table: String) = Await.ready(client.sql("refresh table " + table), timeout)
