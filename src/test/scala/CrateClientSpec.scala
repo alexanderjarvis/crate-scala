@@ -1,3 +1,6 @@
+import java.util.Date
+import java.util.UUID
+
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,6 +27,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
 
   dropTable("test")
   dropTable("testarrays")
+  dropTable("testpartitioned")
 
   "Crate Client" should "create new client" in {
     val request = client.sql("SELECT * FROM sys.nodes")
@@ -275,6 +279,53 @@ class CrateClientSpec extends FlatSpec with Matchers {
     response2.results.length shouldBe (2)
     val results2 = response2.results
     results2(1).rowCount shouldBe (-2)
+  }
+
+  it should "bulk insert paritioned data" in {
+    val createTable = client.sql("""create table testpartitioned (
+                                      d string,
+                                      device_id string,
+                                      ts timestamp,
+                                      ax double,
+                                      ay double,
+                                      az double,
+                                      gx double,
+                                      gy double,
+                                      gz double,
+                                      primary key (d, device_id, ts)
+                                    )
+                                    partitioned by (d)
+                                    clustered by (device_id) """.replace("\n", ""))
+    Await.ready(createTable, timeout)
+
+    val stmt = "INSERT INTO testpartitioned (d, device_id, ts, ax, ay, az, gx, gy, gz) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+
+    case class Paritioned(
+      day: String,
+      deviceId: UUID,
+      timestamp: Date,
+      ax: Double,
+      ay: Double,
+      az: Double,
+      gx: Option[Double],
+      gy: Option[Double],
+      gz: Option[Double])
+
+    val start = Paritioned("141209", UUID.randomUUID(), new Date(), 0, 0, 0, Some(0), Some(0), Some(0))
+    val num = 5000
+
+    val bulkArgs = Array.iterate(start, num) { data =>
+      data.copy(timestamp = new Date(data.timestamp.getTime() + 50))
+    }.map { d =>
+      Array(d.day, d.deviceId, d.timestamp, d.ax, d.ay, d.az, d.gx, d.gy, d.gz)
+    }
+
+    val request = client.bulkSql(stmt, bulkArgs)
+    val response = Await.result(request, 30 seconds)
+    println("bulk insert duration: " + response.duration())
+    response.results.length shouldBe (num)
+    val results = response.results
+    results(1).rowCount shouldBe (1)
   }
 
   def refresh(table: String) = Await.ready(client.sql("refresh table " + table), timeout)
