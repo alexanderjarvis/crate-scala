@@ -99,16 +99,21 @@ object CrateResponse {
       }
       case _: BooleanType => o.asInstanceOf[Boolean]
       case arrayType: ArrayType => o match {
-        case o: java.util.List[_] => o.asInstanceOf[java.util.List[_]].asScala.toList.map { io =>
+        case o: java.util.List[Any] => o.asInstanceOf[java.util.List[Any]].asScala.toList.map { io =>
+          convertToScalaColumnType(io, arrayType.innerType())
+        }
+        case o: Array[Any] => o.asInstanceOf[Array[Any]].toList.map { io =>
           convertToScalaColumnType(io, arrayType.innerType())
         }
         case null => null
+        case _ => { println("BOOO"); null}
       }
       case _: ObjectType => o.asInstanceOf[java.util.Map[_, _]].asScala.toMap.mapValues(_.asInstanceOf[AnyVal])
       //case _: IpType => o.asInstanceOf[String]  // unreachable as IpType extends StringType
       //case _: TimestampType => o.asInstanceOf[Long] // unreachable as TimestampType extends LongType
-      case _: GeoPointType => o.asInstanceOf[java.util.List[Double]].asScala.toList.map(_.asInstanceOf[AnyVal])
+      case _: GeoPointType => o.asInstanceOf[Array[Any]].toList.map(_.asInstanceOf[AnyVal])
       case _: UndefinedType => null
+      case _ => { println("COULDNT DO IT "); null}
     }
   }
 

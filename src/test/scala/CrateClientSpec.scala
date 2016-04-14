@@ -102,11 +102,13 @@ class CrateClientSpec extends FlatSpec with Matchers {
     val row = rows(0)
     row shouldBe a [Array[Any]]
 
+    println("ROW 1 : " + row(1).getClass.getTypeName)
+
     // result columns are alphabetically sorted
     row(0) shouldBe a [String]
     row(0) shouldBe "127.0.0.1"
-    row(1) shouldBe a [List[_]]
-    row(1).asInstanceOf[List[String]] should contain inOrderOnly ("crate", "is", "pretty", "cool")
+    row(1) shouldBe a [Array[Any]]
+    row(1).asInstanceOf[Array[Any]] should contain inOrderOnly ("crate", "is", "pretty", "cool")
     //row(2) shouldBe a [Byte] // CRATE: 127 was not an instance of byte, but an instance of java.lang.Integer
     row(2) shouldBe Byte.MaxValue
     //row(3) shouldBe a [Boolean]
@@ -115,8 +117,8 @@ class CrateClientSpec extends FlatSpec with Matchers {
     row(4) shouldBe Double.MaxValue
     //row(5) shouldBe a [Float] // CRATE: 3.4028235E38 was not an instance of float, but an instance of java.lang.Double
     //row(5) shouldBe Float.MaxValue // CRATE: 3.4028235E38 was not equal to 3.4028235E38
-    row(6) shouldBe a [List[_]]
-    row(6).asInstanceOf[List[Double]] should contain inOrderOnly (-0.1015987, 51.5286416)
+    row(6) shouldBe a [Array[Any]]
+    row(6).asInstanceOf[Array[Any]] should contain inOrderOnly (-0.1015987, 51.5286416)
     //row(7) shouldBe a [Int]
     row(7) shouldBe Int.MaxValue
     //row(8) shouldBe a [Long]
@@ -205,17 +207,17 @@ class CrateClientSpec extends FlatSpec with Matchers {
     val row = response.rows.head
 
     // result columns are alphabetically sorted
-    row(0).asInstanceOf[List[Boolean]] should contain only true
-    row(1).asInstanceOf[List[Byte]] should contain only Byte.MaxValue
-    row(2).asInstanceOf[List[Double]] should contain only Double.MaxValue
+    row(0).asInstanceOf[Array[Any]] should contain only true
+    row(1).asInstanceOf[Array[Any]] should contain only Byte.MaxValue
+    row(2).asInstanceOf[Array[Any]] should contain only Double.MaxValue
     //row(3).asInstanceOf[List[Float]] should contain only Float.MaxValue // CRATE: List(3.4028235E38) did not contain only (3.4028235E38)
-    row(4).asInstanceOf[List[Int]] should contain only Int.MaxValue
-    row(5).asInstanceOf[List[String]] should contain only "127.0.0.1"
-    row(6).asInstanceOf[List[Long]] should contain only Long.MaxValue
+    row(4).asInstanceOf[Array[Any]] should contain only Int.MaxValue
+    row(5).asInstanceOf[Array[Any]] should contain only "127.0.0.1"
+    row(6).asInstanceOf[Array[Any]] should contain only Long.MaxValue
     //row(7)
-    row(8).asInstanceOf[List[Short]] should contain only Short.MaxValue
-    row(9).asInstanceOf[List[String]] should contain only "hello"
-    row(10).asInstanceOf[List[Long]] should contain only timestamp
+    row(8).asInstanceOf[Array[Any]] should contain only Short.MaxValue
+    row(9).asInstanceOf[Array[Any]] should contain only "hello"
+    row(10).asInstanceOf[Array[Any]] should contain only timestamp
   }
 
   it should "map more array data types with types on response set" in {
@@ -249,14 +251,14 @@ class CrateClientSpec extends FlatSpec with Matchers {
     println("select: " + response)
     response.rowCount.shouldBe(1)
 
-    implicit val row = response.rows.head
+//    implicit val row = response.rows.head
+    val row = response.rows.head
+    response.cellWithRow("st",row).shouldBe(Some("hello"))
+    response.cellWithRow("i",row).shouldBe(Some(Int.MaxValue))
+    response.cellWithRow("ts",row).shouldBe(Some(timestamp))
+    response.cellWithRow("none",row).shouldBe(None)
 
-    response.cell("st").shouldBe(Some("hello"))
-    response.cell("i").shouldBe(Some(Int.MaxValue))
-    response.cell("ts").shouldBe(Some(timestamp))
-    response.cell("none").shouldBe(None)
-
-    response.cell[String]("st").shouldBe(Some("hello"))
+    response.cellWithRow[String]("st",row).shouldBe(Some("hello"))
   }
 
   it should "bulk insert data" in {
