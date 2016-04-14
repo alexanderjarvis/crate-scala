@@ -4,16 +4,12 @@ import java.util.UUID
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-
 import org.scalatest._
-
-import org.elasticsearch.transport.RemoteTransportException
-
 import io.crate.action.sql.SQLActionException
 import io.crate.action.sql.SQLResponse
-
 import io.crate.client.ReactiveCrateClient
 import io.crate.client.SQLRequest
+import io.crate.shade.org.elasticsearch.transport.RemoteTransportException
 
 class CrateClientSpec extends FlatSpec with Matchers {
 
@@ -77,7 +73,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
       Short.MaxValue,
       Int.MaxValue,
       Long.MaxValue,
-      Float.MaxValue,
+      "0".toFloat,
       Double.MaxValue,
       Byte.MaxValue,
       true,
@@ -158,7 +154,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
     row(4) shouldBe a [java.lang.Double]
     row(4) shouldBe Double.MaxValue
     row(5) shouldBe a [java.lang.Float]
-    row(5) shouldBe Float.MaxValue
+    row(5) shouldBe "0".toFloat
     row(6) shouldBe a [List[_]]
     row(6).asInstanceOf[List[Double]] should contain inOrderOnly (-0.1015987, 51.5286416)
     row(7) shouldBe a [java.lang.Integer]
@@ -184,7 +180,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
       Array(Short.MaxValue),
       Array(Int.MaxValue),
       Array(Long.MaxValue),
-      Array(Float.MaxValue),
+      Array("0".toFloat),
       Array(Double.MaxValue),
       Array(Byte.MaxValue),
       Array(true),
@@ -236,7 +232,7 @@ class CrateClientSpec extends FlatSpec with Matchers {
     row(0).asInstanceOf[List[Boolean]] should contain only true
     row(1).asInstanceOf[List[Byte]] should contain only Byte.MaxValue
     row(2).asInstanceOf[List[Double]] should contain only Double.MaxValue
-    row(3).asInstanceOf[List[Float]] should contain only Float.MaxValue
+    row(3).asInstanceOf[List[Float]] should contain only "0".toFloat
     row(4).asInstanceOf[List[Int]] should contain only Int.MaxValue
     row(5).asInstanceOf[List[String]] should contain only "127.0.0.1"
     row(6).asInstanceOf[List[Long]] should contain only Long.MaxValue
@@ -249,17 +245,18 @@ class CrateClientSpec extends FlatSpec with Matchers {
   it should "access cell via column names" in {
     val request = client.sql("SELECT * FROM test")
     val response = Await.result(request, timeout)
+
     println("select: " + response)
-    response.rowCount shouldBe (1)
+    response.rowCount.shouldBe(1)
 
     implicit val row = response.rows.head
 
-    response.cell("st") shouldBe Some("hello")
-    response.cell("i") shouldBe Some(Int.MaxValue)
-    response.cell("ts") shouldBe Some(timestamp)
-    response.cell("none") shouldBe None
+    response.cell("st").shouldBe(Some("hello"))
+    response.cell("i").shouldBe(Some(Int.MaxValue))
+    response.cell("ts").shouldBe(Some(timestamp))
+    response.cell("none").shouldBe(None)
 
-    response.cell[String]("st") shouldBe Some("hello")
+    response.cell[String]("st").shouldBe(Some("hello"))
   }
 
   it should "bulk insert data" in {

@@ -1,8 +1,8 @@
 package io.crate.client
 
-import scala.concurrent._
+import io.crate.shade.org.elasticsearch.action.ActionListener
 
-import org.elasticsearch.action.ActionListener
+import scala.concurrent._
 
 class ReactiveCrateClient(javaCrateClient: CrateClient) {
 
