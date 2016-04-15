@@ -102,8 +102,6 @@ class CrateClientSpec extends FlatSpec with Matchers {
     val row = rows(0)
     row shouldBe a [Array[Any]]
 
-    println("ROW 1 : " + row(1).getClass.getTypeName)
-
     // result columns are alphabetically sorted
     row(0) shouldBe a [String]
     row(0) shouldBe "127.0.0.1"
@@ -201,7 +199,6 @@ class CrateClientSpec extends FlatSpec with Matchers {
     refresh("testarrays")
     val request = client.sql("SELECT * FROM testarrays")
     val response = Await.result(request, timeout)
-    println("select: " + response)
     response.rowCount shouldBe (1)
 
     val row = response.rows.head
@@ -225,7 +222,6 @@ class CrateClientSpec extends FlatSpec with Matchers {
     sqlRequest.includeTypesOnResponse(true)
     val request = client.sql(sqlRequest)
     val response = Await.result(request, timeout)
-    println("select: " + response)
     response.rowCount shouldBe (1)
 
     val row = response.rows.head
@@ -248,7 +244,6 @@ class CrateClientSpec extends FlatSpec with Matchers {
     val request = client.sql("SELECT * FROM test")
     val response = Await.result(request, timeout)
 
-    println("select: " + response)
     response.rowCount.shouldBe(1)
 
 //    implicit val row = response.rows.head
